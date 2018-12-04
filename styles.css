@@ -1,0 +1,28 @@
+
+/* ===============
+    Universal Selector
+=============== */
+* {
+    box-sizing: border-box;
+}
+
+/* ===============
+        Display Layout
+=============== */
+
+.container {
+    max-width: 600px;
+    background-color: grey;
+}
+
+
+/* ===============
+            Styling
+=============== */
+
+
+
+
+/* ===============
+        Media Queries
+=============== */
