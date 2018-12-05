@@ -17,11 +17,11 @@
     margin-top: 100px;
 }
 
-.tet-row {
+.row {
     height: 28px;
 }
 
-.tet-col {
+.block{
     display: inline-block;
     width: 10%;
     height: 28px;
