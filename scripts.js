@@ -4,11 +4,12 @@ let shapes = [];
 let currentShape;
 let currentColor;
 let occupiedBlocks = [];    // Blocks with dataset of 2 are set
+let storedBlocks = [];
 let colors = ["white", "orange", "red", "yellow", "blue"];
 let state = 1;      // 1 = running, 0 = paused, 2 = game over
 let score = 0;
 let width = 10;
-let height = 20;
+let height = 21;
 let move = 0;
 let direction = "";     // Set event listeners for "down" "right" "left" key events
 
@@ -50,7 +51,12 @@ function createBoard() {
             block.dataset.x = x;
             block.dataset.y = y;
             block.dataset.index = counter;
-            block.dataset.state = 0; // Determines block states (set, moving, etc.)
+            if (y === 20) {
+                block.dataset.state = 2;
+                row.style.display = "none";
+            } else {
+                block.dataset.state = 0; // Determines block states (set, moving, etc.)
+            }
             row.appendChild(block);
             counter++;
         }
@@ -88,6 +94,7 @@ function displayShape() {
         color: currentColor
     }
 
+    let currBlocks = [];
     // Finds the correct blocks to match current shape and changes its background color
     for (let i = 0; i < selectedShape.shape.length; i++) {
         let x = selectedShape.shape[i][0];
@@ -99,12 +106,44 @@ function displayShape() {
         for (let k = 0; k < xBlocks.length; k++) {
             if (parseInt(xBlocks[k].dataset.y) === y) {
                 let block = xBlocks[k];
-                block.dataset.state = 1;    // Indicates that block is occupied
-                block.style.backgroundColor = selectedShape.color;
+                currBlocks.push(block);
                 break;
             }
         }
     }
+    storedBlocks.push(currBlocks);
+    if (storedBlocks.length === 3) {
+        storedBlocks.shift();
+    }
+    // debugger;
+    let collisionDetected = false;
+    counter = 0;
+    for (i = 0; i < currBlocks.length; i++) {
+        let block = currBlocks[i];
+        if (block.dataset.state === "2") {
+            collisionDetected = true;
+        } else {
+            counter++;
+        }
+    }
+    if (collisionDetected === true) {
+        let blocks = storedBlocks[0];
+        for (i = 0; i < blocks.length; i++) {
+            block = blocks[i];
+            block.dataset.state = 2;
+            block.style.backgroundColor = selectedShape.color;
+        }
+        occupiedBlocks.push(blocks);
+        resetShape();
+    } else if (counter === currBlocks.length) {
+        for (i = 0; i < currBlocks.length; i++) {
+            block = currBlocks[i];
+            block.dataset.state = 1;    // Indicates that block is occupied
+            block.style.backgroundColor = selectedShape.color;
+        }
+    }
+    console.log(currBlocks);
+    console.log(storedBlocks);
     move++;
 }
 // Clears current blocks
@@ -129,4 +168,4 @@ function resetShape() {
 createShapes();
 createBoard();
 getRandomShape(shapes.length);
-// setInterval(displayShape, 1000);
+// setInterval(displayShape, 500);
