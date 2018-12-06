@@ -54,6 +54,8 @@ function createBoard() {
             if (y === 20) {
                 block.dataset.state = 2;
                 row.style.display = "none";
+            } else if (y === -1 ) {
+                row.style.display = "none";
             } else {
                 block.dataset.state = 0; // Determines block states (set, moving, etc.)
             }
@@ -78,11 +80,11 @@ function displayShape() {
 
     // Tracks offset in cases of key enter events
     if (direction === "down") {
-        move += 1;
+        location[1] = 1;
     } else if (direction === "left") {
-        center -= 1;
+        location[0] -= 1;
     } else if (direction === "right") {
-        center += 1;
+        location[0] += 1;
     }
 
     // Clears current displayed block
@@ -95,6 +97,7 @@ function displayShape() {
     }
 
     let currBlocks = [];
+    let firstRow = false;
     // Finds the correct blocks to match current shape and changes its background color
     for (let i = 0; i < selectedShape.shape.length; i++) {
         let x = selectedShape.shape[i][0];
@@ -107,6 +110,9 @@ function displayShape() {
             if (parseInt(xBlocks[k].dataset.y) === y) {
                 let block = xBlocks[k];
                 currBlocks.push(block);
+                if (y === 0) {
+                    firstRow = true;
+                }
                 break;
             }
         }
@@ -115,18 +121,22 @@ function displayShape() {
     if (storedBlocks.length === 3) {
         storedBlocks.shift();
     }
-    // debugger;
+
     let collisionDetected = false;
     counter = 0;
     for (i = 0; i < currBlocks.length; i++) {
         let block = currBlocks[i];
         if (block.dataset.state === "2") {
             collisionDetected = true;
+            break;
         } else {
             counter++;
         }
     }
-    if (collisionDetected === true) {
+    if (collisionDetected === true && firstRow === true) {
+        resetBlocks();
+        return;
+    } else if (collisionDetected === true) {
         let blocks = storedBlocks[0];
         for (i = 0; i < blocks.length; i++) {
             block = blocks[i];
@@ -141,10 +151,8 @@ function displayShape() {
             block.dataset.state = 1;    // Indicates that block is occupied
             block.style.backgroundColor = selectedShape.color;
         }
+        move++;
     }
-    console.log(currBlocks);
-    console.log(storedBlocks);
-    move++;
 }
 // Clears current blocks
 function clearBlocks() {
@@ -165,7 +173,36 @@ function resetShape() {
     getRandomShape(shapes.length);
 }
 
+// Resets all occupied blocks in event of gameover
+function resetBlocks() {
+    alert("Sorry, you lose!");
+    for (let i = 0; i < occupiedBlocks.length; i++) {
+        for (let k = 0; k < occupiedBlocks[i].length; k++) {
+            let block = occupiedBlocks[i][k];
+            block.dataset.state = 0;
+            block.removeAttribute("style");
+        }
+    }
+    occupiedBlocks = [];
+}
+
+function setUpEventListeners() {
+    document.addEventListener("keydown", function(event) {
+        if (event.which === 37) {
+            direction = "left";
+        } else if (event.which === 39) {
+            direction = "right";
+        } else if (event.which === 40) {
+            direction = "down";
+        } else if (event.which === 38) {
+            // inverseShape();      // Need to cycle through shape directions in this case with a new function
+        }
+    })
+}
+
+
 createShapes();
 createBoard();
+setUpEventListeners();
 getRandomShape(shapes.length);
 // setInterval(displayShape, 500);
