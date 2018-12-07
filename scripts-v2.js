@@ -97,7 +97,15 @@ function displayPiece() {
         }
     } else if (direction === "right") {
         directionShift = true;
-        if (center !== 9 && !detectCollision.detectRight()) {          // Detect edge or pieces to the right
+        let hitWall = false;
+        for (let i = 0; i < shape.length; i++) {        // Detect if block is next to wall
+            let x = shape[i][0];
+            x += center;
+            if (x === 9) {
+                hitWall = true;
+            }
+        }
+        if (hitWall === false && !detectCollision.detectRight()) {          // Detect edge or pieces to the right
             center += 1;
         }
     }
@@ -195,7 +203,7 @@ let detectCollision = {
         return detectCollision.getShape(1, 0);
     }
 }
- 
+
 // Listen for arrow key user inputs
  function setUpEventListeners() {
      document.addEventListener("keydown", function(event) {
