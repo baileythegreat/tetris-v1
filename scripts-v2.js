@@ -7,18 +7,39 @@ let state = 1;      // 1 = running, 0 = paused, 2 = game over
 let score = 0;
 let width = 10;
 let height = 22;
-let center = Math.floor(width / 2) - 1;
+let center = Math.floor(width / 2);
 let move = 0;
 
 // Define pieces
 let tetrimino = {
-    square: [ [0, 0], [1, 0], [0, -1],  [1, -1] ],
-    straight: [ [0, -3], [0, -2], [0, -1], [0, 0] ],
-    tBlock: [ [0, 0], [1, 0], [1, -1], [2, 0] ],
-    sBlock: [ [0, 0], [1, 0], [1, -1], [2, -1] ],
-    zBlock: [ [0, -1], [1, 0], [1, -1], [2, 0] ],
-    jBlock: [ [0, 0], [0, -1], [1, 0], [2, 0] ],
-    lBlock: [ [0, 0], [1, 0], [2, 0], [2, -1] ],
+    square: {
+        name: "square",
+        shape: [ [0, 0], [1, 0], [0, -1],  [1, -1] ]
+    },
+    straight: {
+        name: "straight",
+        shape: [ [0, -2], [0, -1], [0, 0], [0, 1] ]
+    },
+    tBlock: {
+        name: "tBlock",
+        shape: [ [0, 0], [1, 0], [-1, 0], [0,-1] ]
+    },
+    sBlock: {
+        name: "sBlock",
+        shape: [ [0, 0], [-1, 0], [0, -1], [1, -1] ]
+    },
+    zBlock: {
+        name: "zBlock",
+        shape: [ [0, 0], [1, 0], [0, -1], [-1, -1] ]
+    },
+    jBlock: {
+        name: "jBlock",
+        shape: [ [0, 0], [-1, 0], [1, 0], [-1, -1] ]
+    },
+    lBlock: {
+        name: "lBlock",
+        shape: [ [0, 0], [-1, 0], [1, 0], [1, -1] ]
+    },
 
     createPieces: function() {
         shapes.push(tetrimino.square);
@@ -73,12 +94,16 @@ function getRandomShape() {
     currentShape = shape;
 }
 
+createBoard();
+tetrimino.createPieces();
+getRandomShape();
+
 let displayPiece = {
 
     movePiece: function(collision) {
         let blocks = document.querySelectorAll(".block");
         let length = blocks.length;
-        let shape = currentShape.shape;
+        let shape = currentShape.shape.shape;
         let color = currentShape.color;
 
         // Runs when no blocks are present below current shape
@@ -117,7 +142,7 @@ let displayPiece = {
 
             for (let i = 0; i < finalShape.length; i++) {
                 let block = finalShape[i];
-                if (block.dataset.y === "0") {
+                if (block.dataset.y === "-1") {
                     clearBlocks();
                     resetBlocks();
                     return;
@@ -133,7 +158,7 @@ let displayPiece = {
     },
 
     moveLeft: function() {
-        if (center !== 0 && !detectCollision.detectLeft()) {         // Detect edge or pieces to the left
+        if (center >1 && !detectCollision.detectLeft()) {         // Detect edge or pieces to the left
             center -= 1;
         displayPiece.movePiece();
         }
@@ -141,7 +166,7 @@ let displayPiece = {
 
     moveRight: function() {
         let hitWall = false;
-        let shape = currentShape.shape;
+        let shape = currentShape.shape.shape;
         for (let i = 0; i < shape.length; i++) {        // Detect if any block is next to wall
             let x = shape[i][0];
             x += center;
@@ -166,6 +191,34 @@ let displayPiece = {
         displayPiece.movePiece(collision);
     }
 
+}
+
+let inverseShape = {
+
+    inverse: function() {
+        let shape = currentShape.shape.shape;
+        let shapeName = currentShape.shape.name;
+        let length = shape.length;
+        for (let i = 0; i < length; i++) {
+            let x = shape[i][0];
+            let y = shape[i][1];
+            if (shapeName === "square") {
+                return;
+            } else if (shapeName === "straight") {
+                shape[i][0] = -y;
+                shape[i][1] = -x;
+            } else {
+                if (y === 0) {
+                    shape[i][0] = y;
+                    shape[i][1] = x;
+                } else {
+                    shape[i][0] = -y;
+                    shape[i][1] = x;
+                }
+            }
+        }
+        displayPiece.movePiece();
+    }
 }
 
 let detectCollision = {
@@ -225,7 +278,7 @@ let detectCollision = {
          } else if (event.which === 40) {
              displayPiece.moveDown();
          } else if (event.which === 38) {
-             // inverseShape();      // Need to cycle through shape directions in this case with a new function
+             inverseShape.inverse();
          }
      })
  }
@@ -269,8 +322,6 @@ function runWithDebugger(ourFunction) {
     ourFunction();
 }
 
-createBoard();
-tetrimino.createPieces();
-getRandomShape();
+
 setUpEventListeners();
 // setInterval (moveDown, 200);
