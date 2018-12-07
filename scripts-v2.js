@@ -9,8 +9,6 @@ let width = 10;
 let height = 22;
 let center = Math.floor(width / 2) - 1;
 let move = 0;
-let direction = "";     // Set event listeners for "down" "right" "left" key events
-
 
 // Define pieces
 let tetrimino = {
@@ -75,30 +73,76 @@ function getRandomShape() {
     currentShape = shape;
 }
 
-function displayPiece() {
-    // Clears blocks
-    clearBlocks();
+let displayPiece = {
 
-    let blocks = document.querySelectorAll(".block");
-    let length = blocks.length;
-    let piece = {
-        shape: currentShape.shape,
-        color: currentShape.color
-    }
-    let shape = piece.shape;
+    movePiece: function(collision) {
+        let blocks = document.querySelectorAll(".block");
+        let length = blocks.length;
+        let shape = currentShape.shape;
+        let color = currentShape.color;
 
-    let directionShift = false;
-    if (direction === "down") {
-        // location[1] += 1;
-    } else if (direction === "left") {
-        directionShift = true;
+        // Runs when no blocks are present below current shape
+        if (!collision) {
+            // Clears blocks
+            clearBlocks();
+            // Parses through blocks in current shape
+            // Add current center and move positioning to each block's coordinates in the shape
+            for (let i = 0; i < shape.length; i++) {
+                let shapeBlock = shape[i];
+                let x = shapeBlock[0];
+                let y = shapeBlock[1];
+                x += center;
+                y += move;
+
+                // Parses through all blocks on the board
+                for (let k = 0; k < length; k++) {
+                    // Checks for block coordinates on the board
+                    if (parseInt(blocks[k].dataset.x) === x && parseInt(blocks[k].dataset.y) === y) {
+                        let block = blocks[k];
+                        block.dataset.state = 3;
+                        block.style.backgroundColor = color;
+                        break;
+                    }
+                }
+            }
+        } else if (collision) {     // Runs when existing blocks are detected beneath current shape
+            let finalShape = [];
+            // Parse through all blocks on board
+            for (let i = 0; i < length; i++) {
+                let block = blocks[i];
+                if (block.dataset.state === "3") {
+                    finalShape.push(block);
+                }
+            }
+
+            for (let i = 0; i < finalShape.length; i++) {
+                let block = finalShape[i];
+                if (block.dataset.y === "0") {
+                    clearBlocks();
+                    resetBlocks();
+                    return;
+                } else {
+                    block.dataset.state = 2;
+                    block.style.backgroundColor = color;
+                    occupiedBlocks.push(block);
+                }
+            }
+            center = Math.floor(width / 2) - 1;
+            resetShape();
+        }
+    },
+
+    moveLeft: function() {
         if (center !== 0 && !detectCollision.detectLeft()) {         // Detect edge or pieces to the left
             center -= 1;
+        displayPiece.movePiece();
         }
-    } else if (direction === "right") {
-        directionShift = true;
+    },
+
+    moveRight: function() {
         let hitWall = false;
-        for (let i = 0; i < shape.length; i++) {        // Detect if block is next to wall
+        let shape = currentShape.shape;
+        for (let i = 0; i < shape.length; i++) {        // Detect if any block is next to wall
             let x = shape[i][0];
             x += center;
             if (x === 9) {
@@ -106,55 +150,22 @@ function displayPiece() {
             }
         }
         if (hitWall === false && !detectCollision.detectRight()) {          // Detect edge or pieces to the right
-            center += 1;
+            center += 1;            // Shifts all blocks in piece to the right by one
         }
-    }
+        displayPiece.movePiece();
+    },
 
-    // Checks if a collision occurs by moving the current block
-    let collision = false;
-    if (detectCollision.detectBottom()) {
-        collision = true;
-    }
-
-    // Parses through blocks in current shape
-    // Add current center and move positioning to each block's coordinates in the shape
-    for (let i = 0; i < shape.length; i++) {
-        let shapeBlock = shape[i];
-        let x = shapeBlock[0];
-        let y = shapeBlock[1];
-        x += center;
-        if (!collision) {
-            y += move;
-        } else if (collision && directionShift) {
-            y += move;
+    moveDown: function() {
+        // Checks if a collision occurs by moving the current block
+        let collision = false;
+        if (detectCollision.detectBottom()) {
+            collision = true;
         } else {
-            y += (move - 1);
+            move++;
         }
-        // Parses through all blocks on the board
-        for (let k = 0; k < length; k++) {
-            // Checks for block coordinates on the board
-            if (parseInt(blocks[k].dataset.x) === x && parseInt(blocks[k].dataset.y) === y) {
-                let block = blocks[k];
-                if (collision) {
-                    if (y === 0) {
-                        resetBlocks();
-                        return;
-                    } else {
-                        block.dataset.state = 2;
-                        occupiedBlocks.push(block);
-                    }
-                } else {
-                    block.dataset.state = 3;
-                }
-                block.style.backgroundColor = piece.color;
-            }
-        }
+        displayPiece.movePiece(collision);
     }
-    if (collision) {
-        resetShape();
-        center = Math.floor(width / 2) - 1;
-    }
-    direction = "";
+
 }
 
 let detectCollision = {
@@ -166,7 +177,7 @@ let detectCollision = {
         // Retrieves the current shape
         for (let k = 0; k < length; k++) {
             let block = blocks[k];
-            if (block.dataset.state === "1") {
+            if (block.dataset.state === "3") {
                 shape.push(block);
             }
         }
@@ -208,14 +219,11 @@ let detectCollision = {
  function setUpEventListeners() {
      document.addEventListener("keydown", function(event) {
          if (event.which === 37) {
-             direction = "left";
-             displayPiece();
+             displayPiece.moveLeft();
          } else if (event.which === 39) {
-             direction = "right";
-             displayPiece();
+             displayPiece.moveRight();
          } else if (event.which === 40) {
-             direction = "down";
-             displayPiece();
+             displayPiece.moveDown();
          } else if (event.which === 38) {
              // inverseShape();      // Need to cycle through shape directions in this case with a new function
          }
@@ -253,8 +261,7 @@ function resetBlocks() {
 }
 
 function moveDown() {
-    move++;
-    displayPiece();
+    displayPiece.moveDown();
 }
 
 function runWithDebugger(ourFunction) {
