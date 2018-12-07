@@ -87,21 +87,24 @@ function displayPiece() {
     }
     let shape = piece.shape;
 
+    let directionShift = false;
     if (direction === "down") {
         // location[1] += 1;
     } else if (direction === "left") {
-        if (center !== 0) {         // Detect edge or pieces to the left
+        directionShift = true;
+        if (center !== 0 && !detectCollision.detectLeft()) {         // Detect edge or pieces to the left
             center -= 1;
         }
     } else if (direction === "right") {
-        if (center !== 9) {          // Detect edge or pieces to the right
+        directionShift = true;
+        if (center !== 9 && !detectCollision.detectRight()) {          // Detect edge or pieces to the right
             center += 1;
         }
     }
 
     // Checks if a collision occurs by moving the current block
     let collision = false;
-    if (collisionDetected()) {
+    if (detectCollision.detectBottom()) {
         collision = true;
     }
 
@@ -113,6 +116,8 @@ function displayPiece() {
         let y = shapeBlock[1];
         x += center;
         if (!collision) {
+            y += move;
+        } else if (collision && directionShift) {
             y += move;
         } else {
             y += (move - 1);
@@ -144,37 +149,53 @@ function displayPiece() {
     direction = "";
 }
 
-// Checks if any a collision will occur on the level beneath the current shape
-function collisionDetected() {
-    let blocks = document.querySelectorAll(".block");
-    let length = blocks.length;
-    let shape = [];
-    // Parses through all blocks on the board to find current shape
-    for (let k = 0; k < length; k++) {
-        if (blocks[k].dataset.state === "1") {
-            shape.push(blocks[k]);
-        }
-    }
-    // Parses through shape and checks if there's an existing block beneath each of its blocks
-    for (let i = 0; i < shape.length; i++)  {
-        let shapeBlock = shape[i];
-        let x = parseInt(shapeBlock.dataset.x);
-        let y = parseInt(shapeBlock.dataset.y);
-        y += 1;
-
+let detectCollision = {
+    // Input (x, y) coordinates to shift the shape's position and detect if any existing blocks are there
+    getShape: function(x, y) {
+        let shape = [];
+        let blocks = document.querySelectorAll(".block");
+        let length = blocks.length;
+        // Retrieves the current shape
         for (let k = 0; k < length; k++) {
-            // Checks block coordinates below each block in the shape
-            if (parseInt(blocks[k].dataset.x) === x && parseInt(blocks[k].dataset.y) === y) {
-                let block = blocks[k];
-                if (block.dataset.state === "2") {
-                    return true;
+            let block = blocks[k];
+            if (block.dataset.state === "1") {
+                shape.push(block);
+            }
+        }
+        // Parses through shape and retrieves coordinates for each block
+        for (let i = 0; i < shape.length; i++)  {
+            let shapeBlock = shape[i];
+            let coordX = parseInt(shapeBlock.dataset.x);
+            let coordY = parseInt(shapeBlock.dataset.y);
+            coordX += x;        // Adds or subtracts horizontal coordinates to check sides
+            coordY += y;        // Adds vertical coordinates to check coordinates below
+
+            // Checks each altered block coordinate
+            for (let k = 0; k < length; k++) {
+                if (parseInt(blocks[k].dataset.x) === coordX && parseInt(blocks[k].dataset.y) === coordY) {
+                    let block = blocks[k];
+                    if (block.dataset.state === "2") {
+                        return true;
+                    }
                 }
             }
         }
+        return false
+    },
+    // Checks if a collision will occur on the level beneath the current shape
+    detectBottom: function() {
+        return detectCollision.getShape(0, 1);
+    },
+    // Checks if a collision will occur to the right of any of the shape's current blocks
+    detectLeft: function() {
+        return detectCollision.getShape(-1, 0);
+    },
+    // Checks if a collision will occur to the left of any of the shape's current blocks
+    detectRight: function() {
+        return detectCollision.getShape(1, 0);
     }
-    return false;
- }
-
+}
+ 
 // Listen for arrow key user inputs
  function setUpEventListeners() {
      document.addEventListener("keydown", function(event) {
@@ -226,6 +247,11 @@ function resetBlocks() {
 function moveDown() {
     move++;
     displayPiece();
+}
+
+function runWithDebugger(ourFunction) {
+    debugger;
+    ourFunction();
 }
 
 createBoard();
