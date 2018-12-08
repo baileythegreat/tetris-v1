@@ -158,7 +158,16 @@ let displayPiece = {
     },
 
     moveLeft: function() {
-        if (center >1 && !detectCollision.detectLeft()) {         // Detect edge or pieces to the left
+        let hitWall = false;
+        let shape = currentShape.shape.shape;
+        for (let i = 0; i < shape.length; i++) {        // Detect if any block is next to wall
+            let x = shape[i][0];
+            x += center;
+            if (x === 0) {
+                hitWall = true;
+            }
+        }
+        if (!hitWall && !detectCollision.detectLeft()) {         // Detect edge or pieces to the left
             center -= 1;
         displayPiece.movePiece();
         }
@@ -174,7 +183,7 @@ let displayPiece = {
                 hitWall = true;
             }
         }
-        if (hitWall === false && !detectCollision.detectRight()) {          // Detect edge or pieces to the right
+        if (!hitWall && !detectCollision.detectRight()) {          // Detect edge or pieces to the right
             center += 1;            // Shifts all blocks in piece to the right by one
         }
         displayPiece.movePiece();
@@ -193,15 +202,18 @@ let displayPiece = {
 
 }
 
-let inverseShape = {
+let invertShape = {
 
-    inverse: function() {
+    invert: function() {
         let shape = currentShape.shape.shape;
         let shapeName = currentShape.shape.name;
-        let length = shape.length;
-        for (let i = 0; i < length; i++) {
+        let hitLeft = false;
+        let hitRight = false;
+
+        for (let i = 0; i < shape.length; i++) {
             let x = shape[i][0];
             let y = shape[i][1];
+
             if (shapeName === "square") {
                 return;
             } else if (shapeName === "straight") {
@@ -216,6 +228,16 @@ let inverseShape = {
                     shape[i][1] = x;
                 }
             }
+            if ((shape[i][0] + center) < 0) {       // Checks if inverting the object will hit left wall
+                hitLeft = true;
+            } else if ((shape[i][0] + center) > 9) {     // Checks if inverting the object will hit right wall
+                hitRight = true;
+            }
+        }
+        if (hitLeft) {
+            center++;       // Adjusts shape position if left wall will be hit
+        } else if (hitRight) {
+            center--;       // Adjusts shape position if right wall will be hit
         }
         displayPiece.movePiece();
     }
@@ -278,7 +300,7 @@ let detectCollision = {
          } else if (event.which === 40) {
              displayPiece.moveDown();
          } else if (event.which === 38) {
-             inverseShape.inverse();
+             invertShape.invert();
          }
      })
  }
@@ -324,4 +346,4 @@ function runWithDebugger(ourFunction) {
 
 
 setUpEventListeners();
-// setInterval (moveDown, 200);
+setInterval (moveDown, 200);
