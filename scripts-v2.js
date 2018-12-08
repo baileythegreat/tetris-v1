@@ -8,6 +8,7 @@ let score = 0;
 let width = 10;
 let height = 22;
 let center = Math.floor(width / 2);
+let adjustment = 0;
 let move = 0;
 
 // Define pieces
@@ -54,7 +55,7 @@ let tetrimino = {
     }
 }
 
-// Create board
+// Create game board
 function createBoard() {
     let board = document.getElementById("game-board");
     let counter = 0;
@@ -86,7 +87,7 @@ function createBoard() {
     }
 }
 
-// Generates a random shape
+// Generates a random shape/color combo
 function getRandomShape() {
     let i = Math.floor(Math.random() * Math.floor(shapes.length));
     let shape  = {
@@ -101,24 +102,13 @@ createBoard();
 tetrimino.createPieces();
 getRandomShape();
 
-
-
-
-
-
-
-
-
+// Display the pieces as they move across the board
 let displayPiece = {
 
-    movePiece: function(collision, positionAdjust) {
+    movePiece: function(collision) {
         let blocks = board.scan();
         let shape = currentShape.shape.shape;
         let color = currentShape.color;
-        let adj = positionAdjust;       // Accounts for weird behavior with walls and inverting
-        if (positionAdjust === undefined) {
-            adj = 0;
-        }
 
         // Runs when no blocks are present below current shape
         if (!collision) {
@@ -130,7 +120,7 @@ let displayPiece = {
                 let x = shapeBlock[0];
                 let y = shapeBlock[1];
                 // Add current center and move positioning to each block's coordinates in the shape
-                x += (center + adj);
+                x += (center + adjustment);
                 y += move;
 
                 // Parses through all blocks on the board
@@ -169,36 +159,78 @@ let displayPiece = {
         }
     },
 
+    // displayInverted: function(invBlock, adj) {
+    //     let shape = invBlock;
+    //     let color = currentShape.color;
+    //
+    //     clear.clearBlocks();
+    //
+    //     shape.forEach(function(piece) {
+    //         let block = piece;
+    //         if (adj !== 0) {
+    //             let blocks = board.scan();
+    //             let x = parseInt(block.dataset.x) + adj;
+    //             let y = parseInt(block.dataset.y);
+    //             for (let i = 0; i < blocks.length; i++) {
+    //                 if (parseInt(blocks[i].dataset.x) === x && parseInt(blocks[i].dataset.y) === y) {
+    //                     blocks[i].dataset.state = 3;
+    //                     blocks[i].style.backgroundColor = color;
+    //                 }
+    //             }
+    //         } else {
+    //             block.dataset.state = 3;
+    //             block.style.backgroundColor = color;
+    //         }
+    //     })
+
+    // },
+
     moveLeft: function() {
-        let hitWall = false;
+        let hitWall = displayPiece.hitLeft();
+
+        if (!hitWall && !detectCollision.detectLeft()) {         // Detect edge or pieces to the left
+            center -= 1;
+        }
+        // if (!displayPiece.hitRight() && adjustment < 0) {
+        //     adjustment = 0;
+        // }
+        displayPiece.movePiece();
+    },
+
+    moveRight: function() {
+        let hitWall = displayPiece.hitRight();
+
+        if (!hitWall && !detectCollision.detectRight()) {          // Detect edge or pieces to the right
+            center += 1;            // Shifts all blocks in piece to the right by one
+        }
+        // if (!displayPiece.hitLeft() && adjustment > 0) {
+        //     adjustment = 0;
+        // }
+        displayPiece.movePiece();
+    },
+
+    hitLeft: function() {
         let shape = currentShape.shape.shape;
         for (let i = 0; i < shape.length; i++) {        // Detect if any block is next to wall
             let x = shape[i][0];
             x += center;
             if (x === 0) {
-                hitWall = true;
+                return true;
             }
         }
-        if (!hitWall && !detectCollision.detectLeft()) {         // Detect edge or pieces to the left
-            center -= 1;
-        displayPiece.movePiece();
-        }
+        return false;
     },
 
-    moveRight: function() {
-        let hitWall = false;
+    hitRight: function() {
         let shape = currentShape.shape.shape;
         for (let i = 0; i < shape.length; i++) {        // Detect if any block is next to wall
             let x = shape[i][0];
             x += center;
             if (x === 9) {
-                hitWall = true;
+                return true;
             }
         }
-        if (!hitWall && !detectCollision.detectRight()) {          // Detect edge or pieces to the right
-            center += 1;            // Shifts all blocks in piece to the right by one
-        }
-        displayPiece.movePiece();
+        return false;
     },
 
     moveDown: function() {
@@ -209,125 +241,18 @@ let displayPiece = {
         } else {
             move++;
         }
-        // let max = [];
-        // let adj = 0;
-        // let right = false;
-        // let left = false;
-        // let shape = currentShape.shape.shape;
-        // for (let i = 0; i < shape.length; i++) {        // Detect if horizontal adjustments are needed due to inverting
-        //         let x = shape[i][0];
-        //         if ( (x + center) > 9 ) {
-        //             max.push(x);
-        //             right = true;
-        //         } else if ( (x + center) < 0 ) {
-        //             max.push(x)
-        //             left = true;
-        //         }
-        // }
-        // if (max.length > 0) {
-        //     adj = Math.max(...max);
-        // }
-        //
-        // if (right === true) {
-        //     displayPiece.movePiece(collision, -adj);
-        // } else if (left === true) {
-        //     displayPiece.movePiece(collision, adj);
-        // }
-
-        displayPiece.movePiece(collision, undefined);
-
+        displayPiece.movePiece(collision);
     }
 
 }
 
+let invert = {
 
-
-
-
-
-
-
-
-
-
-
-
-let invertShape = {
-
-    // board.locatePiece()
-
-    // function (0) (parameter: adjustment)
-        // Invert the piece
-
-    // function(1) (parameter: adjustment)
-        // board.locatePiece() - find current piece
-        // Return where piece would be if inverted once
-
-    // function (2) (parameter: location)
-        // Determine if any pieces exists at an input location
-            // Return true or false
-    // function(3) (parameter: location)
-        // Determine if the input piece is on the left wall
-            // Return true or false
-    // function(4) (parameter: location)
-        // Determine if the input piece is on the right wall
-                // Return true or false
-    // function(5) (parameter: location)
-        // Determine if the input piece is at the bottom
-                // Return true or false
-
-    // function(6)
-        // board.locatePiece() - find current piece
-        // function(1) - figure out where the piece will be once inverted
-
-        // Run inverted piece through function (2)
-            // If function(2) === true
-                // Don't invert
-            // Else
-                // Run current piece through functions (3, 4, & 5)
-
-                    // If function(3) === true  (piece on left wall)
-                        // Run inverted piece through function(3)
-                            // If the inverted piece is not on the left wall
-                                // Call function(0) to invert the piece, but shift it over to the left by one
-                                // Display the piece
-                            // Else if the inverted piece goes through the wall
-                                // Determine how far the piece is "out of bounds" (adj)
-                                    // Call function(1) and adjust it to the right by adj
-                                        // If function(1) still returns false
-                                            // Call function(0) to invert the piece, shift it to the right by adj
-                                            // Display the piece
-                                        // Else don't invert piece
-
-                    // Else If function(4) === true (piece on right wall)
-                        // Run inverted piece through function(3)
-                            // If the inverted piece is not on the right wall
-                                // Call function(0) to invert the piece, but shift it over to the right by one
-                                // Display the piece
-                            // Else if the inverted piece goes through the right wall
-                                // Determine how far the piece is "out of bounds" (adj)
-                                    // Call function(1) and adjust it to the left by adj
-                                        // If function(1) still returns false
-                                        // Call function(0) to invert the piece, shift it to the left by adj
-                                        // Display the piece
-
-                    // If function(5) === true (piece on bottom)
-
-
-
-
-
-
-
-
-
-    invert: function() {
+    // function(0) -- Invert the pieces
+    invertShape: function() {
         let shape = currentShape.shape.shape;
         let shapeName = currentShape.shape.name;
         let state = currentShape.shape.state;   // For s and z blocks
-        let hitLeft = false;
-        let hitRight = false;
-        let max = 1;
 
         for (let i = 0; i < shape.length; i++) {
             let x = shape[i][0];
@@ -339,7 +264,6 @@ let invertShape = {
             } else if (shapeName === "straight") {
                 shape[i][0] = -y;
                 shape[i][1] = -x;
-                max = 2;
             } else if (shapeName === "sBlock" || shapeName === "zBlock") {
                 if (state === 0) {
                     if (y === 0) {
@@ -367,13 +291,7 @@ let invertShape = {
                     shape[i][1] = x;
                 }
             }
-            if ((shape[i][0] + center) < 0) {       // Checks if inverting the object will hit left wall
-                hitLeft = true;
-            } else if ((shape[i][0] + center) > 9) {     // Checks if inverting the object will hit right wall
-                hitRight = true;
-            }
         }
-
         if (shapeName === "sBlock" || shapeName === "zBlock") {
             if ( state === 0 ) {
                 currentShape.shape.state = 1;
@@ -381,38 +299,166 @@ let invertShape = {
                 currentShape.shape.state = 0;
             }
         }
-
-        if (hitLeft) {
-            // center++;       // Adjusts shape position if left wall will be hit
-            displayPiece.movePiece(undefined, 1);
-            // center--;
-        } else if (hitRight) {
-            // center -= max;       // Adjusts shape position if right wall will be hit
-            displayPiece.movePiece(undefined, -max);
-            // center += max;
-        } else {
-            displayPiece.movePiece(undefined, undefined);
-        }
     },
 
+    // function(1) -- Return where piece would be if inverted once
+    getInvertLocation: function(adjHor, adjVer) {
+        let shape = currentShape.shape.shape;
+        let shapeName = currentShape.shape.name;
+        let state = currentShape.shape.state;   // For s and z blocks
+        let invertedShape = [];
+
+        for (let i = 0; i < shape.length; i++) {
+            let x = shape[i][0];
+            let y = shape[i][1];
+            let z = x;
+
+            // Alter shape coordinates to inverse shapes
+            if (shapeName === "square") {
+                return;
+            } else if (shapeName === "straight") {
+                x = -y;
+                y = -z;
+                max = 2;
+                invertedShape.push([x, y]);
+            } else if (shapeName === "sBlock" || shapeName === "zBlock") {
+                if (state === 0) {
+                    if (y === 0) {
+                        x = y;
+                        y = z;
+                    } else {
+                        x = -y;
+                        y = z;
+                    }
+                } else if (state === 1) {
+                    if (x === 0) {
+                        x = y;
+                        y = z;
+                    } else {
+                        x = y;
+                        y = -z;
+                    }
+                }
+                invertedShape.push([x, y]);
+            } else {
+                if (y === 0) {
+                    x = y;
+                    y = z;
+                } else {
+                    x = -y;
+                    y = z;
+                }
+                invertedShape.push([x, y]);
+            }
+        }
+
+        let blocks = board.scan();
+        let invertedBlocks = [];
+        let xAdj = adjHor;
+        let yAdj = adjVer;
+        if (adjHor === undefined) {
+            xAdj = 0;
+        }
+        if (adjVer === undefined) {
+            yAdj = 0;
+        }
+
+        invertedShape.forEach(function(i) {
+            let shapeBlock = i;
+            let x = shapeBlock[0];
+            let y = shapeBlock[1];
+            // Add current center and move positioning to each block's coordinates in the shape
+            x += (center + xAdj);
+            y += (move +yAdj);
+            // Parses through all blocks on the board
+            blocks.forEach(function(k) {
+                let block = k;
+                // Checks for block coordinates on the board
+                if (parseInt(block.dataset.x) === x && parseInt(block.dataset.y) === y) {
+                    invertedBlocks.push(block);
+                }
+            })
+        })
+
+        return invertedBlocks;
+    },
+
+    // function (2) -- Determine if any pieces exists at an input location
+    detectExisting: function(location) {
+        check = location;
+        blocks = board.scan();
+
+        for (let i = 0; i < check.length; i++) {
+            invertedBlock = check[i];
+            let x = parseInt(invertedBlock.dataset.x);
+            let y = parseInt(invertedBlock.dataset.y);
+
+            for ( let k = 0; k < blocks.length; k++) {
+                let block = blocks[k];
+                if ( parseInt(block.dataset.x) === x && parseInt(block.dataset.y) === y) {
+                    if (block.dataset.state === "2") {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    },
+
+    // function(3) -- If inverting would cause an error with the wall, returns which wall and how much to adjust by
+    checkWall: function(location) {
+        let results = {
+            wall: "",
+            adjustment: 0
+        }
+        let piece = location;
+        if (piece.length < 4) {
+            for (let i = 0; i < piece.length; i++) {
+                let block = piece[i];
+                let x = parseInt(block.dataset.x);
+                let y = parseInt(block.dataset.y);
+
+                if (x === 0) {
+                    results.wall = "left";
+                } else if (x === 9) {
+                    results.wall = "right";
+                }
+            }
+            if (currentShape.shape.name === "straight" && results.wall == "right") {
+                results.adjustment = 2;
+            } else {
+                results.adjustment = 1;
+            }
+        }
+
+        return results;
+    },
+
+    invertPiece: function() {
+        let invertLocation = invert.getInvertLocation();   // Gets where the current piece would invert to
+        let blockInterference = invert.detectExisting(invertLocation);  // Returns true/false if existing blocks are there
+        let wallResults = invert.checkWall(invertLocation);     // Returns any needed wall adjustments
+        adjustment = 0;
+
+        if (blockInterference) {
+            return;
+        }
+        if (wallResults.wall === "left") {
+            adjustment = wallResults.adjustment;
+        } else if (wallResults.wall === "right") {
+            adjustment = wallResults.adjustment * -1;
+        }
+
+        invert.invertShape();
+        displayPiece.movePiece(undefined);
+    }
 }
-
-
-
-
-
-
-
-
-
-
-
 
 let detectCollision = {
     // Input (x, y) coordinates to shift the shape's position and detect if any existing blocks are there
     getShape: function(x, y) {
         let blocks = board.scan();
-        let shape = board.locatePiece();
+        let shape = board.getPiece();
         // Parses through shape and retrieves coordinates for each block
         for (let i = 0; i < shape.length; i++)  {
             let shapeBlock = shape[i];
@@ -454,7 +500,7 @@ let board = {
         return blocks;
     },
     // Returns an array containing all blocks of active piece
-    locatePiece: function() {
+    getPiece: function() {
         let piece = [];
         let blocks = board.scan();
         let length = blocks.length;
@@ -514,7 +560,7 @@ let clear = {
          } else if (event.which === 40) {
              displayPiece.moveDown();
          } else if (event.which === 38) {
-             invertShape.invert();
+             invert.invertPiece();
          }
      })
  }
