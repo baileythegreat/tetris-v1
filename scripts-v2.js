@@ -26,11 +26,13 @@ let tetrimino = {
     },
     sBlock: {
         name: "sBlock",
-        shape: [ [0, 0], [-1, 0], [0, -1], [1, -1] ]
+        shape: [ [0, 0], [-1, 0], [0, -1], [1, -1] ],
+        state: 0
     },
     zBlock: {
         name: "zBlock",
-        shape: [ [0, 0], [1, 0], [0, -1], [-1, -1] ]
+        shape: [ [0, 0], [1, 0], [0, -1], [-1, -1] ],
+        state: 0
     },
     jBlock: {
         name: "jBlock",
@@ -94,66 +96,76 @@ function getRandomShape() {
     currentShape = shape;
 }
 
+// Initializes the game
 createBoard();
 tetrimino.createPieces();
 getRandomShape();
 
+
+
+
+
+
+
+
+
 let displayPiece = {
 
-    movePiece: function(collision) {
-        let blocks = document.querySelectorAll(".block");
-        let length = blocks.length;
+    movePiece: function(collision, positionAdjust) {
+        let blocks = board.scan();
         let shape = currentShape.shape.shape;
         let color = currentShape.color;
+        let adj = positionAdjust;       // Accounts for weird behavior with walls and inverting
+        if (positionAdjust === undefined) {
+            adj = 0;
+        }
 
         // Runs when no blocks are present below current shape
         if (!collision) {
             // Clears blocks
-            clearBlocks();
+            clear.clearBlocks();
             // Parses through blocks in current shape
-            // Add current center and move positioning to each block's coordinates in the shape
-            for (let i = 0; i < shape.length; i++) {
-                let shapeBlock = shape[i];
+            shape.forEach(function(i) {
+                let shapeBlock = i;
                 let x = shapeBlock[0];
                 let y = shapeBlock[1];
-                x += center;
+                // Add current center and move positioning to each block's coordinates in the shape
+                x += (center + adj);
                 y += move;
 
                 // Parses through all blocks on the board
-                for (let k = 0; k < length; k++) {
+                blocks.forEach(function(k) {
+                    let block = k;
                     // Checks for block coordinates on the board
-                    if (parseInt(blocks[k].dataset.x) === x && parseInt(blocks[k].dataset.y) === y) {
-                        let block = blocks[k];
+                    if (parseInt(block.dataset.x) === x && parseInt(block.dataset.y) === y) {
                         block.dataset.state = 3;
                         block.style.backgroundColor = color;
-                        break;
                     }
-                }
-            }
+                })
+            })
         } else if (collision) {     // Runs when existing blocks are detected beneath current shape
             let finalShape = [];
             // Parse through all blocks on board
-            for (let i = 0; i < length; i++) {
-                let block = blocks[i];
+            blocks.forEach(function(i) {
+                let block = i;
                 if (block.dataset.state === "3") {
                     finalShape.push(block);
                 }
-            }
-
-            for (let i = 0; i < finalShape.length; i++) {
-                let block = finalShape[i];
+            })
+            finalShape.forEach(function(i) {
+                let block = i;
                 if (block.dataset.y === "-1") {
-                    clearBlocks();
-                    resetBlocks();
+                    clear.clearBlocks();
+                    clear.resetBlocks();
                     return;
                 } else {
                     block.dataset.state = 2;
                     block.style.backgroundColor = color;
                     occupiedBlocks.push(block);
                 }
-            }
+            })
             center = Math.floor(width / 2) - 1;
-            resetShape();
+            clear.resetShape();
         }
     },
 
@@ -197,28 +209,155 @@ let displayPiece = {
         } else {
             move++;
         }
-        displayPiece.movePiece(collision);
+        // let max = [];
+        // let adj = 0;
+        // let right = false;
+        // let left = false;
+        // let shape = currentShape.shape.shape;
+        // for (let i = 0; i < shape.length; i++) {        // Detect if horizontal adjustments are needed due to inverting
+        //         let x = shape[i][0];
+        //         if ( (x + center) > 9 ) {
+        //             max.push(x);
+        //             right = true;
+        //         } else if ( (x + center) < 0 ) {
+        //             max.push(x)
+        //             left = true;
+        //         }
+        // }
+        // if (max.length > 0) {
+        //     adj = Math.max(...max);
+        // }
+        //
+        // if (right === true) {
+        //     displayPiece.movePiece(collision, -adj);
+        // } else if (left === true) {
+        //     displayPiece.movePiece(collision, adj);
+        // }
+
+        displayPiece.movePiece(collision, undefined);
+
     }
 
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
 let invertShape = {
+
+    // board.locatePiece()
+
+    // function (0) (parameter: adjustment)
+        // Invert the piece
+
+    // function(1) (parameter: adjustment)
+        // board.locatePiece() - find current piece
+        // Return where piece would be if inverted once
+
+    // function (2) (parameter: location)
+        // Determine if any pieces exists at an input location
+            // Return true or false
+    // function(3) (parameter: location)
+        // Determine if the input piece is on the left wall
+            // Return true or false
+    // function(4) (parameter: location)
+        // Determine if the input piece is on the right wall
+                // Return true or false
+    // function(5) (parameter: location)
+        // Determine if the input piece is at the bottom
+                // Return true or false
+
+    // function(6)
+        // board.locatePiece() - find current piece
+        // function(1) - figure out where the piece will be once inverted
+
+        // Run inverted piece through function (2)
+            // If function(2) === true
+                // Don't invert
+            // Else
+                // Run current piece through functions (3, 4, & 5)
+
+                    // If function(3) === true  (piece on left wall)
+                        // Run inverted piece through function(3)
+                            // If the inverted piece is not on the left wall
+                                // Call function(0) to invert the piece, but shift it over to the left by one
+                                // Display the piece
+                            // Else if the inverted piece goes through the wall
+                                // Determine how far the piece is "out of bounds" (adj)
+                                    // Call function(1) and adjust it to the right by adj
+                                        // If function(1) still returns false
+                                            // Call function(0) to invert the piece, shift it to the right by adj
+                                            // Display the piece
+                                        // Else don't invert piece
+
+                    // Else If function(4) === true (piece on right wall)
+                        // Run inverted piece through function(3)
+                            // If the inverted piece is not on the right wall
+                                // Call function(0) to invert the piece, but shift it over to the right by one
+                                // Display the piece
+                            // Else if the inverted piece goes through the right wall
+                                // Determine how far the piece is "out of bounds" (adj)
+                                    // Call function(1) and adjust it to the left by adj
+                                        // If function(1) still returns false
+                                        // Call function(0) to invert the piece, shift it to the left by adj
+                                        // Display the piece
+
+                    // If function(5) === true (piece on bottom)
+
+
+
+
+
+
+
+
 
     invert: function() {
         let shape = currentShape.shape.shape;
         let shapeName = currentShape.shape.name;
+        let state = currentShape.shape.state;   // For s and z blocks
         let hitLeft = false;
         let hitRight = false;
+        let max = 1;
 
         for (let i = 0; i < shape.length; i++) {
             let x = shape[i][0];
             let y = shape[i][1];
 
+            // Alter shape coordinates to inverse shapes
             if (shapeName === "square") {
                 return;
             } else if (shapeName === "straight") {
                 shape[i][0] = -y;
                 shape[i][1] = -x;
+                max = 2;
+            } else if (shapeName === "sBlock" || shapeName === "zBlock") {
+                if (state === 0) {
+                    if (y === 0) {
+                        shape[i][0] = y;
+                        shape[i][1] = x;
+                    } else {
+                        shape[i][0] = -y;
+                        shape[i][1] = x;
+                    }
+                } else if (state === 1) {
+                    if (x === 0) {
+                        shape[i][0] = y;
+                        shape[i][1] = x;
+                    } else {
+                        shape[i][0] = y;
+                        shape[i][1] = -x;
+                    }
+                }
             } else {
                 if (y === 0) {
                     shape[i][0] = y;
@@ -234,28 +373,46 @@ let invertShape = {
                 hitRight = true;
             }
         }
-        if (hitLeft) {
-            center++;       // Adjusts shape position if left wall will be hit
-        } else if (hitRight) {
-            center--;       // Adjusts shape position if right wall will be hit
+
+        if (shapeName === "sBlock" || shapeName === "zBlock") {
+            if ( state === 0 ) {
+                currentShape.shape.state = 1;
+            } else if ( state === 1 ) {
+                currentShape.shape.state = 0;
+            }
         }
-        displayPiece.movePiece();
-    }
+
+        if (hitLeft) {
+            // center++;       // Adjusts shape position if left wall will be hit
+            displayPiece.movePiece(undefined, 1);
+            // center--;
+        } else if (hitRight) {
+            // center -= max;       // Adjusts shape position if right wall will be hit
+            displayPiece.movePiece(undefined, -max);
+            // center += max;
+        } else {
+            displayPiece.movePiece(undefined, undefined);
+        }
+    },
+
 }
+
+
+
+
+
+
+
+
+
+
+
 
 let detectCollision = {
     // Input (x, y) coordinates to shift the shape's position and detect if any existing blocks are there
     getShape: function(x, y) {
-        let shape = [];
-        let blocks = document.querySelectorAll(".block");
-        let length = blocks.length;
-        // Retrieves the current shape
-        for (let k = 0; k < length; k++) {
-            let block = blocks[k];
-            if (block.dataset.state === "3") {
-                shape.push(block);
-            }
-        }
+        let blocks = board.scan();
+        let shape = board.locatePiece();
         // Parses through shape and retrieves coordinates for each block
         for (let i = 0; i < shape.length; i++)  {
             let shapeBlock = shape[i];
@@ -265,9 +422,9 @@ let detectCollision = {
             coordY += y;        // Adds vertical coordinates to check coordinates below
 
             // Checks each altered block coordinate
-            for (let k = 0; k < length; k++) {
-                if (parseInt(blocks[k].dataset.x) === coordX && parseInt(blocks[k].dataset.y) === coordY) {
-                    let block = blocks[k];
+            for (let k = 0; k < blocks.length; k++) {
+                let block = blocks[k];
+                if (parseInt(block.dataset.x) === coordX && parseInt(block.dataset.y) === coordY) {
                     if (block.dataset.state === "2") {
                         return true;
                     }
@@ -290,6 +447,63 @@ let detectCollision = {
     }
 }
 
+let board = {
+    // Returns an array of every block in the board
+    scan: function() {
+        let blocks = document.querySelectorAll(".block");
+        return blocks;
+    },
+    // Returns an array containing all blocks of active piece
+    locatePiece: function() {
+        let piece = [];
+        let blocks = board.scan();
+        let length = blocks.length;
+
+        // Retrieves the current piece
+        for (let i = 0; i < length; i++) {
+            let block = blocks[i];
+            if (block.dataset.state === "3") {
+                piece.push(block);
+            }
+        }
+        return piece;
+    }
+}
+
+let clear = {
+
+    clearBlocks: function() {
+        let blocks = board.scan();
+        let length = blocks.length;
+
+        blocks.forEach(function(x) {
+            let block = x;
+            if (block.dataset.state === "3") {
+                block.dataset.state = 1;
+                block.removeAttribute("style");
+            } else if (block.dataset.state === "1") {
+                block.dataset.state = 0;
+            }
+        })
+    },
+
+    resetShape: function() {
+        move = 0;
+        getRandomShape();
+    },
+
+    resetBlocks: function() {
+        alert("Sorry, you lost!");
+        state = 2;
+        // Clears all currently occupied blocks
+        for (let i = 0; i < occupiedBlocks.length; i++) {
+            occupiedBlocks[i].dataset.state = 0;
+            occupiedBlocks[i].removeAttribute("style");
+        }
+        occupiedBlocks = [];
+    }
+}
+
 // Listen for arrow key user inputs
  function setUpEventListeners() {
      document.addEventListener("keydown", function(event) {
@@ -305,36 +519,6 @@ let detectCollision = {
      })
  }
 
-function clearBlocks() {
-    let blocks = document.querySelectorAll(".block");
-    let length = blocks.length;
-
-    for (i = 0; i < length; i++) {
-        let block = blocks[i];
-        if (block.dataset.state === "3") {
-            block.dataset.state = 1;
-            block.removeAttribute("style");
-        } else if (block.dataset.state === "1") {
-            block.dataset.state = 0;
-        }
-    }
-}
-
-function resetShape() {
-    move = 0;
-    getRandomShape();
-}
-
-function resetBlocks() {
-    alert("Sorry, you lost!");
-    // Clears all currently occupied blocks
-    for (let i = 0; i < occupiedBlocks.length; i ++) {
-        occupiedBlocks[i].dataset.state = 0;
-        occupiedBlocks[i].removeAttribute("style");
-    }
-    occupiedBlocks = [];
-}
-
 function moveDown() {
     displayPiece.moveDown();
 }
@@ -344,6 +528,5 @@ function runWithDebugger(ourFunction) {
     ourFunction();
 }
 
-
 setUpEventListeners();
-setInterval (moveDown, 200);
+// setInterval (moveDown, 200);
