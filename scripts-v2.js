@@ -88,12 +88,15 @@ function createBoard() {
 // Generates a random shape/color combo
 function getRandomShape() {
     let i = Math.floor(Math.random() * Math.floor(shapes.length));
-    // let i = 1;
-    let shape  = {
-        shape:  shapes[i],
+
+    const shape  = {
+        shape:  shapes[i].shape,
+        name: shapes[i].name,
+        state: shapes[i].state,
         color: colors[Math.floor(Math.random() * Math.floor(colors.length))]
     }
-    currentShape = shape;
+    let shapeTemp = JSON.parse(JSON.stringify(shape));      // Deep copy the object to make original immutable
+    currentShape = shapeTemp;
 }
 
 // Initializes the game
@@ -106,7 +109,7 @@ let display = {
 
     movePiece: function(collision, adj) {
         let blocks = board.scan();
-        let shape = currentShape.shape.shape;
+        let shape = currentShape.shape;
         let color = currentShape.color;
         let adjustment = adj;
         if (adj === undefined) {
@@ -186,13 +189,13 @@ let manipulate = {
 
 let invert = {
 
-    // function(0) -- Invert the pieces
+    // Invert the pieces
     invertShape: function() {
-        let shape = currentShape.shape.shape;
-        let shapeName = currentShape.shape.name;
-        let state = currentShape.shape.state;   // For s and z blocks
+        let shape = currentShape.shape;
+        let shapeName = currentShape.name;
+        let state = currentShape.state;   // For s and z blocks
 
-        for (let i = 0; i < shape.length; i++) {
+        for (let i = 0; i <  shape.length; i++) {
             let x = shape[i][0];
             let y = shape[i][1];
 
@@ -232,18 +235,18 @@ let invert = {
         }
         if (shapeName === "sBlock" || shapeName === "zBlock") {
             if ( state === 0 ) {
-                currentShape.shape.state = 1;
+                currentShape.state = 1;
             } else if ( state === 1 ) {
-                currentShape.shape.state = 0;
+                currentShape.state = 0;
             }
         }
     },
 
     // function(1) -- Return where piece would be if inverted once
     getInvertLocation: function(adjHor) {
-        let shape = currentShape.shape.shape;
-        let shapeName = currentShape.shape.name;
-        let state = currentShape.shape.state;   // For s and z blocks
+        let shape = currentShape.shape;
+        let shapeName = currentShape.name;
+        let state = currentShape.state;   // For s and z blocks
         let invertedShape = [];
 
         for (let i = 0; i < shape.length; i++) {
@@ -331,7 +334,7 @@ let invert = {
             if (invOnLeft) {
                 adjustment = 1;
             } else if (invOnRight) {
-                if (currentShape.shape.name === "straight") {
+                if (currentShape.name === "straight") {
                     adjustment = -1 * ( 4 - invertLocation.length);
                 } else {
                     adjustment = -1;
