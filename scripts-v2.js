@@ -3,7 +3,6 @@ let shapes = [];
 let currentShape;
 let colors = ["white", "orange", "red", "yellow", "blue"];
 let occupiedBlocks = [];    // Blocks with dataset of 2 are set
-let state = 1;      // 1 = running, 0 = paused, 2 = game over
 let score = 0;
 let width = 10;
 let height = 22;
@@ -89,6 +88,7 @@ function createBoard() {
 // Generates a random shape/color combo
 function getRandomShape() {
     let i = Math.floor(Math.random() * Math.floor(shapes.length));
+    // let i = 1;
     let shape  = {
         shape:  shapes[i],
         color: colors[Math.floor(Math.random() * Math.floor(colors.length))]
@@ -139,8 +139,8 @@ let display = {
                     finalShape.push(block);
                 }
             })
-            finalShape.forEach(function(i) {
-                let block = i;
+            for (let i = 0; i < finalShape.length; i++) {
+                let block = finalShape[i];
                 if (block.dataset.y === "0" || block.dataset.y === "-1") {
                     clear.clearBlocks();
                     clear.resetBlocks();
@@ -150,13 +150,11 @@ let display = {
                     block.style.backgroundColor = color;
                     occupiedBlocks.push(block);     // Stores blocks in occupied array
                 }
-            })
-            center = Math.floor(width / 2) - 1;     // Resets the positioning and shape
+            }
             clear.resetShape();
         }
     }
 }
-
 
 let manipulate = {
 
@@ -242,7 +240,7 @@ let invert = {
     },
 
     // function(1) -- Return where piece would be if inverted once
-    getInvertLocation: function(adjHor, adjVer) {
+    getInvertLocation: function(adjHor) {
         let shape = currentShape.shape.shape;
         let shapeName = currentShape.shape.name;
         let state = currentShape.shape.state;   // For s and z blocks
@@ -295,12 +293,8 @@ let invert = {
         let blocks = board.scan();
         let invertedBlocks = [];
         let xAdj = adjHor;
-        let yAdj = adjVer;
         if (adjHor === undefined) {
             xAdj = 0;
-        }
-        if (adjVer === undefined) {
-            yAdj = 0;
         }
 
         invertedShape.forEach(function(i) {
@@ -309,7 +303,7 @@ let invert = {
             let y = shapeBlock[1];
             // Add current center and move positioning to each block's coordinates in the shape
             x += (center + xAdj);
-            y += (move +yAdj);
+            y += move;
             // Parses through all blocks on the board
             blocks.forEach(function(k) {
                 let block = k;
@@ -333,7 +327,7 @@ let invert = {
         if (blockInterference) {
             return;
         }
-        if (invertLocation.length < 4) {
+        else if (invertLocation.length < 4) {
             if (invOnLeft) {
                 adjustment = 1;
             } else if (invOnRight) {
@@ -342,6 +336,10 @@ let invert = {
                 } else {
                     adjustment = -1;
                 }
+            }
+            invertLocation = invert.getInvertLocation(adjustment, 0);
+            if (detect.getShape(0, 0, invertLocation)) {
+                return;
             }
         }
         invert.invertShape();
@@ -466,12 +464,13 @@ let clear = {
 
     resetShape: function() {
         move = 0;
+        center = Math.floor(width / 2);     // Resets the positioning and shape
         getRandomShape();
+        display.movePiece();
     },
 
     resetBlocks: function() {
         alert("Sorry, you lost!");
-        state = 2;
         // Clears all currently occupied blocks
         for (let i = 0; i < occupiedBlocks.length; i++) {
             occupiedBlocks[i].dataset.state = 0;
