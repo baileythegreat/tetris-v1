@@ -13,7 +13,7 @@ let move = 0;
 let tetrimino = {
     square: {
         name: "square",
-        shape: [ [0, 0], [1, 0], [0, -1],  [1, -1] ]
+        shape: [ [0, 0], [-1, 0], [0, -1],  [-1, -1] ]
     },
     straight: {
         name: "straight",
@@ -332,7 +332,11 @@ let invert = {
         }
         else if (invertLocation.length < 4) {
             if (invOnLeft) {
-                adjustment = 1;
+                if (currentShape.name === "straight") {
+                    adjustment = ( 4 - invertLocation.length);
+                } else {
+                    adjustment = 1;
+                }
             } else if (invOnRight) {
                 if (currentShape.name === "straight") {
                     adjustment = -1 * ( 4 - invertLocation.length);
