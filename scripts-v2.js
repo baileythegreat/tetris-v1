@@ -4,11 +4,14 @@ let currentShape;
 let colors = ["white", "orange", "red", "yellow", "blue"];
 let occupiedBlocks = [];    // Blocks with dataset of 2 are set
 let score = 0;
+let linesCleared = 0;
 let level = 0;
 let width = 10;
 let height = 23;
 let center = Math.floor(width / 2);
 let move = 0;
+let game;
+let collisionListener;
 
 // Define pieces
 let tetrimino = {
@@ -78,7 +81,7 @@ function createBoard() {
             } else {
                 block.dataset.state = 0; // Determines block states (set, moving, etc.)
             }
-            block.innerHTML = x + ":" + y;
+            // block.innerHTML = x + ":" + y;
             row.appendChild(block);
             counter++;
         }
@@ -104,6 +107,17 @@ function getRandomShape() {
 createBoard();
 tetrimino.createPieces();
 getRandomShape();
+
+function resetTimer() {
+   clearInterval(collisionListener);
+   collisionListener = setInterval (moveDown, 1000);
+}
+
+function updateInterval() {
+    let x = level * 50;
+    let speed = 1000 - x;
+    game = setInterval(naturalMove, speed);
+}
 
 // Display the pieces as they move across the board
 let display = {
@@ -158,6 +172,7 @@ let display = {
             clear.clearRow();
             clear.resetShape();
             board.updateScore();
+            resetTimer();
         }
     },
 
@@ -202,13 +217,20 @@ let display = {
 
 let manipulate = {
 
+    move: function() {
+        if (detect.detectBottom()) {
+            return;
+        } else {
+            move++;
+            display.movePiece(false);
+            resetTimer();
+        }
+    },
+
     moveDown: function() {
         // Checks if a collision occurs by moving the current block
         if (detect.detectBottom()) {
             display.movePiece(true);
-        } else {
-            move++;
-            display.movePiece(false);
         }
     },
 
@@ -217,6 +239,7 @@ let manipulate = {
             center += 1;    // Shift to the right
         }
         display.movePiece();
+        resetTimer();
     },
 
     moveLeft: function() {
@@ -224,6 +247,7 @@ let manipulate = {
             center -= 1;    // Shift to the left
         }
         display.movePiece();
+        resetTimer();
     }
 
 }
@@ -392,6 +416,7 @@ let invert = {
         }
         invert.invertShape();
         display.movePiece(undefined, adjustment);
+        resetTimer();
     }
 }
 
@@ -510,6 +535,7 @@ let board = {
                 score += ( 1200 * (level + 1));
                 break;
         }
+        linesCleared += rowsCleared;
         board.updateScore();
     },
 
@@ -566,6 +592,14 @@ let clear = {
             }
         })
         board.getScore(scoreCounter);       // Calculate new score
+
+        if (linesCleared >= 10) {
+            if (level < 20) {
+                level++;
+                linesCleared -= 10;
+                updateInterval();
+            }
+        }
     },
 
     resetShape: function() {
@@ -597,7 +631,11 @@ let clear = {
          } else if (event.which === 39) {
              manipulate.moveRight();
          } else if (event.which === 40) {
-             manipulate.moveDown();
+             if (detect.detectBottom()) {
+                 manipulate.moveDown();
+             } else {
+                 manipulate.move();
+             }
          } else if (event.which === 38) {
              invert.invertPiece();
          }
@@ -608,6 +646,10 @@ function moveDown() {
     manipulate.moveDown();
 }
 
+function naturalMove() {
+    manipulate.move();
+}
+
 function runWithDebugger(ourFunction) {
     debugger;
     ourFunction();
@@ -615,4 +657,3 @@ function runWithDebugger(ourFunction) {
 
 board.updateScore();
 setUpEventListeners();
-// setInterval (moveDown, 200);
