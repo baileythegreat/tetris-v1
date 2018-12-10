@@ -4,8 +4,9 @@ let currentShape;
 let colors = ["white", "orange", "red", "yellow", "blue"];
 let occupiedBlocks = [];    // Blocks with dataset of 2 are set
 let score = 0;
+let level = 0;
 let width = 10;
-let height = 22;
+let height = 23;
 let center = Math.floor(width / 2);
 let move = 0;
 
@@ -69,10 +70,10 @@ function createBoard() {
             block.dataset.x = x;
             block.dataset.y = y;
             block.dataset.index = counter;
-            if (y === 21) {
+            if (y === 22) {
                 block.dataset.state = 2;
                 row.style.display = "none";
-            } else if (y === -1 ) {
+            } else if (y === -1 || y === 0) {
                 row.style.display = "none";
             } else {
                 block.dataset.state = 0; // Determines block states (set, moving, etc.)
@@ -154,7 +155,47 @@ let display = {
                     occupiedBlocks.push(block);     // Stores blocks in occupied array
                 }
             }
+            clear.clearRow();
             clear.resetShape();
+            board.updateScore();
+        }
+    },
+
+    // Move all current set blocks down by however many rows were cleared
+    shiftDown: function(clearedRow) {
+        let floor = clearedRow;
+        let rows = document.querySelectorAll(".row");   // Identify all the rows on the board
+        let floorY = parseInt(floor.dataset.row);
+
+        for (let i = floorY; i > 0; i--) {       // Loop through the rows starting at the one directly above the one that was cleared
+            let row = rows[i];
+            let blocks = row.childNodes;
+
+            blocks.forEach(function(b) {        // Loop through each block in the row
+                let block = b;
+
+                if (block.dataset.state === "2") {
+                    let boardBlocks = board.scan();
+                    let x = parseInt(block.dataset.x);
+                    let y = parseInt(block.dataset.y);
+                    let color = block.style.backgroundColor;
+
+                    block.dataset.state = 0;
+                    block.removeAttribute("style");
+
+                    y++;
+
+                    for (let k = 0; k < boardBlocks.length; k++) {
+                        let boardBlock = boardBlocks[k];
+
+                        if (parseInt(boardBlock.dataset.x) === x && parseInt(boardBlock.dataset.y) === y) {
+                            boardBlock.dataset.state = 2;
+                            boardBlock.style.backgroundColor = color;
+                            occupiedBlocks.push(boardBlock);
+                        }
+                    }
+                }
+            })
         }
     }
 }
@@ -449,6 +490,32 @@ let board = {
             }
         }
         return piece;
+    },
+
+    // Calculates the score
+    getScore: function(rowsCleared) {
+        switch (rowsCleared) {
+            case 0:
+                break;
+            case 1:
+                score += ( 40 * (level + 1));
+                break;
+            case 2:
+                score += ( 100 * (level + 1));
+                break;
+            case 3:
+                score += ( 300 * (level + 1));
+                break;
+            case 4:
+                score += ( 1200 * (level + 1));
+                break;
+        }
+        board.updateScore();
+    },
+
+    updateScore: function() {
+        let boardScore = document.getElementById("number-score");
+        boardScore.innerHTML = score;
     }
 }
 
@@ -469,6 +536,38 @@ let clear = {
         })
     },
 
+    clearRow: function() {
+        let rows = document.querySelectorAll(".row");   // Identify all the rows on the board
+        let scoreCounter = 0;
+
+        rows.forEach(function(i) {
+            let row = i;
+            let counter = 0;
+
+            if (row.style.display !== "none") {
+                let blocks = row.childNodes;
+
+                blocks.forEach(function(x) {         // Loop through every block in a given row
+                    let block = x;
+                    if (block.dataset.state === "2") {
+                        counter++;           // If any blocks are not occupied, don't clear the row
+                    }
+                })
+
+                if (counter === blocks.length) {            // Removes the state and style of an entire row if every block is occupied
+                    blocks.forEach(function(y) {
+                        let block = y;
+                        block.dataset.state = 0;
+                        block.removeAttribute("style");
+                    })
+                    scoreCounter++;
+                    display.shiftDown(row);
+                }
+            }
+        })
+        board.getScore(scoreCounter);       // Calculate new score
+    },
+
     resetShape: function() {
         move = 0;
         center = Math.floor(width / 2);     // Resets the positioning and shape
@@ -484,6 +583,9 @@ let clear = {
             occupiedBlocks[i].removeAttribute("style");
         }
         occupiedBlocks = [];
+        score = 0;
+        level = 0;
+        board.updateScore();
     }
 }
 
@@ -511,5 +613,6 @@ function runWithDebugger(ourFunction) {
     ourFunction();
 }
 
+board.updateScore();
 setUpEventListeners();
 // setInterval (moveDown, 200);

@@ -10,7 +10,12 @@
         Display Layout
 =============== */
 
+.container {
+    margin-left: 430px;
+}
+
 .wrapper {
+    display: inline-block;
     max-width: 320px;
     color: white;
     background-color: black;
@@ -29,10 +34,23 @@
     border: 1px solid gray;
 }
 
+.score {
+    display: inline-block;
+    vertical-align: top;
+    margin-right: 20px;
+    padding-top: 20px;
+}
+
 /* ===============
             Styling
 =============== */
+label, h2 {
+    font-size: 2em;
+}
 
+h2 {
+    display: inline-block;
+}
 
 
 
