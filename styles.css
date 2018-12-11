@@ -10,50 +10,81 @@
         Display Layout
 =============== */
 
+.title {
+    display: flex;
+    justify-content: center;
+}
+
 .container {
-    margin-left: 430px;
+    display: flex;
+    margin: 0px 300px 50px 120px;
+    justify-content: center;
+}
+
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
 }
 
 .wrapper {
-    display: inline-block;
-    max-width: 320px;
+    max-width: 280px;
     color: white;
     background-color: black;
-    margin: auto;
-    margin-top: 50px;
 }
 
 .row {
-    height: 32px;
-    width: 320px;
+    height: 28px;
+    width: 280px;
 }
 
 .block{
     display: inline-block;
     width: 10%;
-    height: 32px;
+    height: 28px;
     border: 1px solid gray;
 }
 
 .score {
     display: inline-block;
     vertical-align: top;
-    margin-right: 20px;
     padding-top: 20px;
+}
+
+h1 {
+    font-size: 3em;
+    padding: 5px 10px;
+    background: black;
+    margin-bottom: 0;
+}
+
+span {
+    display: inline-block;
 }
 
 h2 {
     display: inline-block;
+    font-size: 1em;
+    width: 100px;
 }
 
 button {
     display: block;
+    font-size: 1.5em;
+    padding: 6px 10px;
+    border-radius: 5px;
+    background: black;
+    color: white;
+}
+
+button:active {
+    border: none;
 }
 
 /* ===============
             Styling
 =============== */
-label, h2 {
+label {
     font-size: 2em;
 }
 

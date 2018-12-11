@@ -9,11 +9,24 @@
     <title>Tetris</title>
 </head>
 <body>
+    <div class="title">
+        <h1>
+            <span style="color: red;">T</span>
+            <span style="color: blue;">e</span>
+            <span style="color: green;">t</span>
+            <span style="color: yellow;">r</span>
+            <span style="color: purple;">i</span>
+            <span style="color: orange;">s</span>
+        </h1>
+    </div>
     <div class="container">
-        <div class="score" id = "score">
-            <label>Score: </label>
-            <h2 id="number-score"></h2>
-            <button id="run-game" onclick="updateInterval()">Play</button>
+        <div class="sidebar">
+            <div class="score" id = "score">
+                <label for="number-score">Score: <h2 id="number-score"></h2></label>
+            </div>
+            <div class="buttons">
+                <button id="run-game" onclick="updateInterval()">Play</button>
+            </div>
         </div>
         <div class="wrapper" id="game-board">
         </div>

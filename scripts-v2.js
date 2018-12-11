@@ -5,13 +5,14 @@ let colors = ["white", "orange", "red", "yellow", "blue"];
 let occupiedBlocks = [];    // Blocks with dataset of 2 are set
 let score = 0;
 let linesCleared = 0;
-let level = 0;
+let level = 12;
 let width = 10;
 let height = 23;
 let center = Math.floor(width / 2);
 let move = 0;
 let game;
 let collisionListener;
+let resetCount = 0;
 
 // Define pieces
 let tetrimino = {
@@ -109,13 +110,23 @@ tetrimino.createPieces();
 getRandomShape();
 
 function resetTimer() {
-   clearInterval(collisionListener);
-   collisionListener = setInterval (moveDown, 1000);
+    if (detect.detectBottom()) {
+        resetCount++;
+    }
+    if (resetCount < 10) {
+       clearInterval(collisionListener);
+       collisionListener = setInterval (moveDown, 1000);
+   } else {
+       resetCount = 0;
+       manipulate.moveDown();
+   }
+
 }
 
 function updateInterval() {
-    let x = level * 50;
+    let x = level * 75;
     let speed = 1000 - x;
+    clearInterval(game);
     game = setInterval(naturalMove, speed);
 }
 
@@ -169,10 +180,10 @@ let display = {
                     occupiedBlocks.push(block);     // Stores blocks in occupied array
                 }
             }
+            resetTimer();
             clear.clearRow();
             clear.resetShape();
             board.updateScore();
-            resetTimer();
         }
     },
 
@@ -239,6 +250,7 @@ let manipulate = {
             center += 1;    // Shift to the right
         }
         display.movePiece();
+        debugger;
         resetTimer();
     },
 
@@ -593,12 +605,10 @@ let clear = {
         })
         board.getScore(scoreCounter);       // Calculate new score
 
-        if (linesCleared >= 10) {
-            if (level < 20) {
-                level++;
-                linesCleared -= 10;
-                updateInterval();
-            }
+        if (linesCleared >= 10 && level < 13) {
+            level++;
+            linesCleared -= 10;
+            updateInterval();
         }
     },
 
@@ -620,6 +630,8 @@ let clear = {
         score = 0;
         level = 0;
         board.updateScore();
+        clearInterval(collisionListener);
+        clearInterval(game);
     }
 }
 
