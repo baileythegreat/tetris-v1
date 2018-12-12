@@ -5,7 +5,7 @@ let colors = ["white", "orange", "red", "yellow", "blue"];
 let occupiedBlocks = [];    // Blocks with dataset of 2 are set
 let score = 0;
 let linesCleared = 0;
-let level = 12;
+let level = 0;
 let width = 10;
 let height = 23;
 let center = Math.floor(width / 2);
@@ -13,6 +13,7 @@ let move = 0;
 let game;
 let collisionListener;
 let resetCount = 0;
+let running = 0;    // 0 = Stopped, 1 = Running
 
 // Define pieces
 let tetrimino = {
@@ -58,78 +59,6 @@ let tetrimino = {
     }
 }
 
-// Create game board
-function createBoard() {
-    let board = document.getElementById("game-board");
-    let counter = 0;
-    // Create rows of game board
-    for (let y = -1; y < height; y++ ) {
-        let row = document.createElement("div");
-        row.className = "row";
-        row.dataset.row = y;
-        // Create individual blocks within the row
-        for (let x = 0; x < width; x++) {
-            let block = document.createElement("div");
-            block.className = "block";
-            block.dataset.x = x;
-            block.dataset.y = y;
-            block.dataset.index = counter;
-            if (y === 22) {
-                block.dataset.state = 2;
-                row.style.display = "none";
-            } else if (y === -1 || y === 0) {
-                row.style.display = "none";
-            } else {
-                block.dataset.state = 0; // Determines block states (set, moving, etc.)
-            }
-            // block.innerHTML = x + ":" + y;
-            row.appendChild(block);
-            counter++;
-        }
-        board.appendChild(row);
-    }
-}
-
-// Generates a random shape/color combo
-function getRandomShape() {
-    let i = Math.floor(Math.random() * Math.floor(shapes.length));
-
-    const shape  = {
-        shape:  shapes[i].shape,
-        name: shapes[i].name,
-        state: shapes[i].state,
-        color: colors[Math.floor(Math.random() * Math.floor(colors.length))]
-    }
-    let shapeTemp = JSON.parse(JSON.stringify(shape));      // Deep copy the object to make original immutable
-    currentShape = shapeTemp;
-}
-
-// Initializes the game
-createBoard();
-tetrimino.createPieces();
-getRandomShape();
-
-function resetTimer() {
-    if (detect.detectBottom()) {
-        resetCount++;
-    }
-    if (resetCount < 10) {
-       clearInterval(collisionListener);
-       collisionListener = setInterval (moveDown, 1000);
-   } else {
-       resetCount = 0;
-       manipulate.moveDown();
-   }
-
-}
-
-function updateInterval() {
-    let x = level * 75;
-    let speed = 1000 - x;
-    clearInterval(game);
-    game = setInterval(naturalMove, speed);
-}
-
 // Display the pieces as they move across the board
 let display = {
 
@@ -172,7 +101,7 @@ let display = {
                 let block = finalShape[i];
                 if (block.dataset.y === "0" || block.dataset.y === "-1") {
                     clear.clearBlocks();
-                    clear.resetBlocks();
+                    runGame.resetBlocks();
                     return;
                 } else {
                     block.dataset.state = 2;        // Sets block state to 2 (existing but not active)
@@ -180,10 +109,10 @@ let display = {
                     occupiedBlocks.push(block);     // Stores blocks in occupied array
                 }
             }
-            resetTimer();
+            runGame.resetTimer();
             clear.clearRow();
-            clear.resetShape();
-            board.updateScore();
+            runGame.resetShape();
+            runGame.updateScore();
         }
     },
 
@@ -234,7 +163,7 @@ let manipulate = {
         } else {
             move++;
             display.movePiece(false);
-            resetTimer();
+            runGame.resetTimer();
         }
     },
 
@@ -251,7 +180,7 @@ let manipulate = {
         }
         display.movePiece();
         debugger;
-        resetTimer();
+        runGame.resetTimer();
     },
 
     moveLeft: function() {
@@ -259,7 +188,7 @@ let manipulate = {
             center -= 1;    // Shift to the left
         }
         display.movePiece();
-        resetTimer();
+        runGame.resetTimer();
     }
 
 }
@@ -428,7 +357,7 @@ let invert = {
         }
         invert.invertShape();
         display.movePiece(undefined, adjustment);
-        resetTimer();
+        runGame.resetTimer();
     }
 }
 
@@ -527,33 +456,6 @@ let board = {
             }
         }
         return piece;
-    },
-
-    // Calculates the score
-    getScore: function(rowsCleared) {
-        switch (rowsCleared) {
-            case 0:
-                break;
-            case 1:
-                score += ( 40 * (level + 1));
-                break;
-            case 2:
-                score += ( 100 * (level + 1));
-                break;
-            case 3:
-                score += ( 300 * (level + 1));
-                break;
-            case 4:
-                score += ( 1200 * (level + 1));
-                break;
-        }
-        linesCleared += rowsCleared;
-        board.updateScore();
-    },
-
-    updateScore: function() {
-        let boardScore = document.getElementById("number-score");
-        boardScore.innerHTML = score;
     }
 }
 
@@ -603,19 +505,124 @@ let clear = {
                 }
             }
         })
-        board.getScore(scoreCounter);       // Calculate new score
+        runGame.getScore(scoreCounter);       // Calculate new score
 
         if (linesCleared >= 10 && level < 13) {
             level++;
             linesCleared -= 10;
-            updateInterval();
+            runGame.updateInterval();
         }
+    }
+}
+
+let runGame = {
+
+    // Create game board
+    createBoard: function() {
+        let board = document.getElementById("game-board");
+        let counter = 0;
+        // Create rows of game board
+        for (let y = -1; y < height; y++ ) {
+            let row = document.createElement("div");
+            row.className = "row";
+            row.dataset.row = y;
+            // Create individual blocks within the row
+            for (let x = 0; x < width; x++) {
+                let block = document.createElement("div");
+                block.className = "block";
+                block.dataset.x = x;
+                block.dataset.y = y;
+                block.dataset.index = counter;
+                if (y === 22) {
+                    block.dataset.state = 2;
+                    row.style.display = "none";
+                } else if (y === -1 || y === 0) {
+                    row.style.display = "none";
+                } else {
+                    block.dataset.state = 0; // Determines block states (set, moving, etc.)
+                }
+                // block.innerHTML = x + ":" + y;
+                row.appendChild(block);
+                counter++;
+            }
+            board.appendChild(row);
+        }
+    },
+
+    resetTimer: function() {
+        if (detect.detectBottom()) {
+            resetCount++;
+        }
+        if (resetCount < 10) {
+           clearInterval(collisionListener);
+           collisionListener = setInterval(runGame.moveDown(), 1000);
+       } else {
+           resetCount = 0;
+           manipulate.moveDown();
+       }
+   },
+
+    updateInterval: function() {
+        running = 1;
+        let x = level * 75;
+        let speed = 1000 - x;
+        clearInterval(game);
+        game = setInterval(runGame.naturalMove(), speed);
+    },
+
+    moveDown: function() {
+        manipulate.moveDown();
+    },
+
+    naturalMove: function() {
+        manipulate.move();
+    },
+
+    // Calculates the score
+    getScore: function(rowsCleared) {
+        switch (rowsCleared) {
+            case 0:
+                break;
+            case 1:
+                score += ( 40 * (level + 1));
+                break;
+            case 2:
+                score += ( 100 * (level + 1));
+                break;
+            case 3:
+                score += ( 300 * (level + 1));
+                break;
+            case 4:
+                score += ( 1200 * (level + 1));
+                break;
+        }
+        linesCleared += rowsCleared;
+        runGame.updateScore();
+    },
+
+    updateScore: function() {
+        let boardScore = document.getElementById("number-score");
+        boardScore.innerHTML = score;
+    },
+
+    // Generates a random shape/color combo
+    getRandomShape: function() {
+        let i = Math.floor(Math.random() * Math.floor(shapes.length));
+
+        const shape  = {
+            shape:  shapes[i].shape,
+            name: shapes[i].name,
+            state: shapes[i].state,
+            color: colors[Math.floor(Math.random() * Math.floor(colors.length))]
+        }
+        let shapeTemp = JSON.parse(JSON.stringify(shape));      // Deep copy the object to make original immutable
+        currentShape = shapeTemp;
     },
 
     resetShape: function() {
         move = 0;
         center = Math.floor(width / 2);     // Resets the positioning and shape
-        getRandomShape();
+        runGame.getRandomShape();
         display.movePiece();
     },
 
@@ -629,43 +636,38 @@ let clear = {
         occupiedBlocks = [];
         score = 0;
         level = 0;
-        board.updateScore();
+        running = 0;
+        runGame.updateScore();
         clearInterval(collisionListener);
         clearInterval(game);
     }
+
 }
 
 // Listen for arrow key user inputs
  function setUpEventListeners() {
      document.addEventListener("keydown", function(event) {
-         if (event.which === 37) {
-             manipulate.moveLeft();
-         } else if (event.which === 39) {
-             manipulate.moveRight();
-         } else if (event.which === 40) {
-             if (detect.detectBottom()) {
-                 manipulate.moveDown();
-             } else {
-                 manipulate.move();
+         if (running === 1) {
+             if (event.which === 37) {
+                 manipulate.moveLeft();
+             } else if (event.which === 39) {
+                 manipulate.moveRight();
+             } else if (event.which === 40) {
+                 if (detect.detectBottom()) {
+                     manipulate.moveDown();
+                 } else {
+                     manipulate.move();
+                 }
+             } else if (event.which === 38) {
+                 invert.invertPiece();
              }
-         } else if (event.which === 38) {
-             invert.invertPiece();
          }
      })
  }
 
-function moveDown() {
-    manipulate.moveDown();
-}
-
-function naturalMove() {
-    manipulate.move();
-}
-
-function runWithDebugger(ourFunction) {
-    debugger;
-    ourFunction();
-}
-
-board.updateScore();
+// Initializes the game
+runGame.createBoard();
+tetrimino.createPieces();
+runGame.getRandomShape();
+runGame.updateScore();
 setUpEventListeners();
