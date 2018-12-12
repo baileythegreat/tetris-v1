@@ -555,7 +555,7 @@ let runGame = {
         }
         if (resetCount < 10) {
            clearInterval(collisionListener);
-           collisionListener = setInterval(runGame.moveDown(), 1000);
+           collisionListener = setInterval(moveDown, 1000);
        } else {
            resetCount = 0;
            manipulate.moveDown();
@@ -567,15 +567,7 @@ let runGame = {
         let x = level * 75;
         let speed = 1000 - x;
         clearInterval(game);
-        game = setInterval(runGame.naturalMove(), speed);
-    },
-
-    moveDown: function() {
-        manipulate.moveDown();
-    },
-
-    naturalMove: function() {
-        manipulate.move();
+        game = setInterval(naturalMove, speed);
     },
 
     // Calculates the score
@@ -641,7 +633,14 @@ let runGame = {
         clearInterval(collisionListener);
         clearInterval(game);
     }
+}
 
+function moveDown() {
+    manipulate.moveDown();
+}
+
+function naturalMove() {
+    manipulate.move();
 }
 
 // Listen for arrow key user inputs

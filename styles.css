@@ -25,17 +25,22 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+
 }
 
 .wrapper {
-    max-width: 280px;
+    max-width: 300px;
+    padding: 10px 10px;
     color: white;
-    background-color: black;
+    background-color: grey;
+    border-radius: 10px;
 }
 
 .row {
     height: 28px;
     width: 280px;
+    background-color: black;
+
 }
 
 .block{
@@ -73,7 +78,7 @@ button {
     font-size: 1.5em;
     padding: 6px 10px;
     border-radius: 5px;
-    background: black;
+    background: darkgreen;
     color: white;
 }
 
